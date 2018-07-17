@@ -122,7 +122,7 @@ if [ -f /etc/debian_version ]; then
     select OPTION in "${OPTIONS[@]}"; do
         case "$REPLY" in
             1|2 ) break;;
-            4 ) errorAndQuit;;
+            3 ) errorAndQuit;;
             *) errorAndContinue;;
         esac
     done
