@@ -1,5 +1,5 @@
 # TeaSpeak-Installer
-TeaSpeak Installer Script
+TeaSpeak install script
 
 Currently supported operating systems:
 - Linux with the apt package manager
