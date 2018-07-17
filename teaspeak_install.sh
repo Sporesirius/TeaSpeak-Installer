@@ -106,7 +106,6 @@ if [ -f /etc/debian_version ]; then
 	checkInstall curl
 	checkInstall screen
 	checkInstall ffmpeg
-	checkInstall libav-tools
 	greenOkAndSleep "DONE!"
 	
 	cyanMessage " "
