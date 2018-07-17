@@ -1,6 +1,6 @@
 #!/bin/bash
 
-INSTALLER_VERSION="1.0"
+INSTALLER_VERSION="1.1"
 INSTALLER_REPO_URL="https://api.github.com/repos/Sporesirius/TeaSpeak-Installer/releases/latest"
 
 TEASPEAK_VERSION=$(curl -s -S -k https://repo.teaspeak.de/latest)
@@ -156,7 +156,7 @@ if [ -f /etc/debian_version ]; then
 	cd /home/$teaUser/
 	
 	cyanMessage " "
-	greenOkAndSleep "Getting TeaSpeak version..."
+	cyanMessage "Getting TeaSpeak version..."
 	greenOkAndSleep "# Newest version is ${TEASPEAK_VERSION}"
 
 	cyanMessage " "
