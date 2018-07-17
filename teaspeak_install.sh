@@ -1,6 +1,6 @@
 #!/bin/bash
 
-INSTALLER_VERSION="1.1"
+INSTALLER_VERSION="1.2"
 INSTALLER_REPO_URL="https://api.github.com/repos/Sporesirius/TeaSpeak-Installer/releases/latest"
 
 TEASPEAK_VERSION=$(curl -s -S -k https://repo.teaspeak.de/latest)
