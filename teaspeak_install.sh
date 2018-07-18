@@ -244,7 +244,8 @@ if [ -f /etc/debian_version ]; then
 
 fi
 
-exit 0
+exit 0 # exit auto updater
+exit 0 # exit installer
 
 
 
