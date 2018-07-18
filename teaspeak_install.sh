@@ -1,8 +1,7 @@
 #!/bin/bash
 
-INSTALLER_VERSION="1.2"
+INSTALLER_VERSION="1.3"
 INSTALLER_REPO_URL="https://api.github.com/repos/Sporesirius/TeaSpeak-Installer/releases/latest"
-
 TEASPEAK_VERSION=$(curl -s -S -k https://repo.teaspeak.de/latest)
 REQUEST_URL="https://repo.teaspeak.de/server/linux/x64/TeaSpeak-${TEASPEAK_VERSION}.tar.gz"
 
@@ -102,17 +101,33 @@ if [ -f /etc/debian_version ]; then
 	greenOkAndSleep "DONE!"
 	
 	cyanMessage " "
-	greenOkAndSleep "# Installing necessary TeaSpeak packages..."
+	greenOkAndSleep "# Installing necessary TeaSpeak and Installer packages..."
 	checkInstall curl
+	checkInstall wget
+	checkInstall tar
 	checkInstall screen
 	checkInstall ffmpeg
+	checkInstall youtube-dl
 	greenOkAndSleep "DONE!"
 	
 	cyanMessage " "
 	cyanMessage "Please enter the name of the TeaSpeak user."
 	read teaUser
+	
+	cyanMessage " "
+	cyanMessage "Please enter the TeaSpeak installation path."
+	cyanMessage "Empty input = /home/ | Example input = /srv/"
+	read teaPath
+	
 	groupadd $teaUser
-	useradd -m -b /home -s /bin/bash -g $teaUser $teaUser
+	if [ "$teaPath" == "" ]; then
+		useradd -m -b /home -s /bin/bash -g $teaUser $teaUser
+		cd /home/$teaUser/
+	else
+		mkdir -p /$teaPath
+		useradd -m -b /$teaPath -s /bin/bash -g $teaUser $teaUser
+		cd /$teaPath/$teaUser/
+	fi
 	
     cyanMessage " "
     cyanMessage "Create key or set password for login?"
@@ -131,11 +146,19 @@ if [ -f /etc/debian_version ]; then
 
         if [ -d /home/$teaUser/.ssh ]; then
             rm -rf /home/$teaUser/.ssh
+        elif [ -d /$teaPath/$teaUser/.ssh ]; then
+            rm -rf /$teaPath/$teaUser/.ssh
         fi
 
-        mkdir -p /home/$teaUser/.ssh
-        chown $teaUser:$teaUser /home/$teaUser/.ssh
-        cd /home/$teaUser/.ssh
+		if [ "$teaPath" == "" ]; then
+			mkdir -p /home/$teaUser/.ssh
+			chown $teaUser:$teaUser /home/$teaUser/.ssh
+			cd /home/$teaUser/.ssh
+		else
+			mkdir -p /$teaPath/$teaUser/.ssh
+			chown $teaUser:$teaUser /$teaPath/$teaUser/.ssh
+			cd /$teaPath/$teaUser/.ssh
+		fi
 
         cyanMessage " "
         cyanMessage "It is recommended but not required to set a password"
@@ -153,7 +176,11 @@ if [ -f /etc/debian_version ]; then
         passwd $teaUser
     fi
 	
-	cd /home/$teaUser/
+	if [ "$teaPath" == "" ]; then
+		cd /home/$teaUser/
+	else
+		cd /$teaPath/$teaUser/
+	fi
 	
 	cyanMessage " "
 	cyanMessage "Getting TeaSpeak version..."
@@ -169,8 +196,13 @@ if [ -f /etc/debian_version ]; then
 
 	cyanMessage " "
 	greenOkAndSleep "# Making scripts executable."
-	chown -R $teaUser:$teaUser *
-	chmod 774 *.sh
+	if [ "$teaPath" == "" ]; then
+		chown -R $teaUser:$teaUser /home/$teaUser/*
+		chmod 774 /home/$teaUser/*.sh
+	else
+		chown -R $teaUser:$teaUser /$teaPath/$teaUser/*
+		chmod 774 /$teaPath/$teaUser/*.sh
+	fi
 	greenOkAndSleep "DONE!"
 
 	cyanMessage " "
