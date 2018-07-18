@@ -109,6 +109,7 @@ if [ "`printf "${LATEST_VERSION}\n${INSTALLER_VERSION}" | sort -V | tail -n 1`" 
 	greenOkAndSleep "# Restarting script now"
 	clear
 	./teaspeak_install.sh
+	exit 0
 else
     greenOkAndSleep "# You are using the up to date version ${INSTALLER_VERSION}."
 fi
@@ -244,8 +245,7 @@ if [ -f /etc/debian_version ]; then
 
 fi
 
-exit 0 # exit auto updater
-exit 0 # exit installer
+exit 0
 
 
 
