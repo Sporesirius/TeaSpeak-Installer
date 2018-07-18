@@ -1,6 +1,6 @@
 #!/bin/bash
 
-INSTALLER_VERSION="1.3"
+INSTALLER_VERSION="1.4"
 INSTALLER_REPO_URL="https://api.github.com/repos/Sporesirius/TeaSpeak-Installer/releases/latest"
 TEASPEAK_VERSION=$(curl -s -S -k https://repo.teaspeak.de/latest)
 REQUEST_URL="https://repo.teaspeak.de/server/linux/x64/TeaSpeak-${TEASPEAK_VERSION}.tar.gz"
@@ -47,6 +47,11 @@ function errorAndContinue {
     continue
 }
 
+function redWarnAndSleep {
+    redMessage $1
+    sleep 1
+}
+
 function greenOkAndSleep {
     greenMessage $1
     sleep 1
@@ -66,9 +71,9 @@ function checkInstall {
     fi
 }
 
-cyanMessage ""
+cyanMessage " "
 redMessage "        TeaSpeak Installer"
-cyanMessage ""
+cyanMessage " "
 
 # We need to be root to install and update
 if [ "`id -u`" != "0" ]; then
@@ -79,7 +84,29 @@ cyanMessage "Checking for the latest installer version..."
 LATEST_VERSION=`wget -q --timeout=60 -O - ${INSTALLER_REPO_URL} | grep -Po '(?<="tag_name": ")([0-9]\.[0-9]+)'`
 
 if [ "`printf "${LATEST_VERSION}\n${INSTALLER_VERSION}" | sort -V | tail -n 1`" != "$INSTALLER_VERSION" ]; then
-    errorAndExit "New version available. Please upgrade to version ${LATEST_VERSION} and retry."
+    redWarnAndSleep "New version available. Downloading new installer version..."
+	wget https://github.com/Sporesirius/TeaSpeak-Installer/archive/${LATEST_VERSION}.tar.gz -O installer_latest.tar.gz
+	greenOkAndSleep "DONE!"
+	
+	cyanMessage " "
+	greenOkAndSleep "# Unpacking installer and replace the old installer with the new one."
+	tar -xzf installer_latest.tar.gz
+	rm installer_latest.tar.gz
+	cd TeaSpeak-Installer-*
+	cp teaspeak_install.sh ../teaspeak_install.sh
+	cd ..
+	rm -R TeaSpeak-Installer-*
+	greenOkAndSleep "DONE!"
+	
+	cyanMessage " "
+	greenOkAndSleep "# Making new script executable."
+	chmod 774 teaspeak_install.sh
+	greenOkAndSleep "DONE!"
+	
+	cyanMessage " "
+	greenOkAndSleep "# Restarting script now"
+	clear
+	./teaspeak_install.sh
 else
     greenOkAndSleep "# You are using the up to date version ${INSTALLER_VERSION}."
 fi
