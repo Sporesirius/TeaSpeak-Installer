@@ -1,6 +1,6 @@
 #!/bin/bash
 
-INSTALLER_VERSION="1.4"
+INSTALLER_VERSION="1.3"
 INSTALLER_REPO_URL="https://api.github.com/repos/Sporesirius/TeaSpeak-Installer/releases/latest"
 TEASPEAK_VERSION=$(curl -s -S -k https://repo.teaspeak.de/latest)
 REQUEST_URL="https://repo.teaspeak.de/server/linux/x64/TeaSpeak-${TEASPEAK_VERSION}.tar.gz"
@@ -81,11 +81,13 @@ if [ "`id -u`" != "0" ]; then
 fi
 
 cyanMessage "Checking for the latest installer version..."
-LATEST_VERSION=`wget -q --timeout=60 -O - ${INSTALLER_REPO_URL} | grep -Po '(?<="tag_name": ")([0-9]\.[0-9]+)'`
+LATEST_VERSION=`wget -q --timeout=60 -O - ${INSTALLER_REPO_URL} | grep -Po '(?<="tag_name": ")([0-9]\.[0-9]+)'
+`
+GET_NEW_VERSION="https://github.com/Sporesirius/TeaSpeak-Installer/archive/${LATEST_VERSION}.tar.gz"
 
 if [ "`printf "${LATEST_VERSION}\n${INSTALLER_VERSION}" | sort -V | tail -n 1`" != "$INSTALLER_VERSION" ]; then
     redWarnAndSleep "New version available. Downloading new installer version..."
-	wget https://github.com/Sporesirius/TeaSpeak-Installer/archive/${LATEST_VERSION}.tar.gz -O installer_latest.tar.gz
+	wget ${GET_NEW_VERSION} -O installer_latest.tar.gz
 	greenOkAndSleep "DONE!"
 	
 	cyanMessage " "
