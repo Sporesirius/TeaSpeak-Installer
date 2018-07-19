@@ -265,7 +265,7 @@ if [ -f /etc/debian_version ]; then
     greenOkAndSleep "DONE!"
 
     cyanMessage " "
-    greenOkAndSleep "Finished, TeaSpeak ${version} is now installed!"
+    greenOkAndSleep "Finished, TeaSpeak ${TEASPEAK_VERSION} is now installed!"
 fi
 
 exit 0
