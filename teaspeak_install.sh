@@ -143,6 +143,7 @@ if [ -f /etc/debian_version ]; then
     checkInstall screen
     checkInstall ffmpeg
     checkInstall youtube-dl
+    checkInstall libav-tools
     greenOkAndSleep "DONE!"
 	
     cyanMessage " "
