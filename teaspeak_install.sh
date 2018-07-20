@@ -141,9 +141,8 @@ if [ -f /etc/debian_version ]; then
     cyanMessage " "
     greenOkAndSleep "# Installing necessary TeaSpeak packages..."
     checkInstall screen
-    checkInstall ffmpeg
-    checkInstall youtube-dl
     checkInstall libav-tools
+    checkInstall youtube-dl
     greenOkAndSleep "DONE!"
 	
     cyanMessage " "
