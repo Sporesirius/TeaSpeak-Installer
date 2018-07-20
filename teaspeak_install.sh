@@ -1,6 +1,6 @@
 #!/bin/bash
 
-INSTALLER_VERSION="1.6"
+INSTALLER_VERSION="1.7"
 
 function whiteMessage {
     echo -e "\\033[0;37m${@}\033[0m"
