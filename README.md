@@ -1,7 +1,8 @@
 # TeaSpeak-Installer
 TeaSpeak install script
 
-Currently supported Distributions:
+Currently supported distributions:
+
 Tested:
 - Debian
 - Ubuntu
