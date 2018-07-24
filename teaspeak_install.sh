@@ -1,55 +1,50 @@
 #!/bin/bash
 
-INSTALLER_VERSION="1.8"
-
-# CentOS: NUX Desktop Repository
-CENTOS_REPO="http://li.nux.ro/download/nux/dextop/el7/x86_64/nux-dextop-release-0-5.el7.nux.noarch.rpm"
-# Fedora: RPM Fusion Repository
-FEDORA_REPO="https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-24.noarch.rpm"
+INSTALLER_VERSION="1.9"
 
 # Colors.
-function greenMessage {
+function greenMessage() {
     echo -e "\\033[32;1m${@}\033[0m"
 }
 
-function cyanMessage {
+function cyanMessage() {
     echo -e "\\033[36;1m${@}\033[0m"
 }
 
-function redMessage {
+function redMessage() {
     echo -e "\\033[31;1m${@}\033[0m"
 }
 
-function yellowMessage {
+function yellowMessage() {
     echo -e "\\033[33;1m${@}\033[0m"
 }
 
 # Errors, warnings and info.
-function errorExit {
+function errorExit() {
     redMessage ${@}
     exit 1
 }
 
-function okQuit {
+function okQuit() {
     redMessage "TeaSpeak Installer closed."
     exit 0
 }
 
-function invalidOption {
+function invalidOption() {
     redMessage "Invalid option. Try another one."
 }
 
-function redWarnAnim {
+function redWarnAnim() {
     redMessage $1
     sleep 1
 }
 
-function greenOkAnim {
+function greenOkAnim() {
     greenMessage $1
     sleep 1
 }
 
-function yellowOkAnim {
+function yellowOkAnim() {
     yellowMessage $1
     sleep 1
 }
@@ -71,7 +66,7 @@ if cat /etc/*release | grep ^NAME | grep Debian &>/dev/null; then # Debian Distr
     PM=apt
     PM2=dpkg
     greenOkAnim "${OS} detected!"
-    if type ${PM} &> /dev/null && ${PM2} --help &> /dev/null; then
+    if { command -v ${PM} && command -v ${PM2} --help; } >/dev/null 2>&1; then
         yellowOkAnim "Using ${PM} package manager."
         osID=1
         pmID=1
@@ -83,7 +78,7 @@ elif cat /etc/*release | grep ^NAME | grep Ubuntu &>/dev/null; then # Ubuntu Dis
     PM=apt
     PM2=dpkg
     greenOkAnim "Ubuntu detected!"
-    if type ${PM} &> /dev/null && ${PM2} --help &> /dev/null; then
+    if { command -v ${PM} && command -v ${PM2} --help; } >/dev/null 2>&1; then
         yellowOkAnim "Using ${PM} package manager."
         osID=2
         pmID=1
@@ -95,7 +90,7 @@ elif cat /etc/*release | grep ^NAME | grep openSUSE &>/dev/null; then # openSUSE
     PM=yzpper
     PM2=rpm
     greenOkAnim "openSUSE detected!"
-    if type ${PM} &> /dev/null && ${PM2} --help &> /dev/null; then
+    if { command -v ${PM} && command -v ${PM2} --help; } >/dev/null 2>&1; then
         yellowOkAnim "Using ${PM} package manager."
         osID=3
         pmID=2
@@ -107,7 +102,7 @@ elif cat /etc/*release | grep ^NAME | grep CentOS &>/dev/null; then # CentOS Dis
     PM=yum
     PM2=rpm
     greenOkAnim "CentOS detected!"
-    if type ${PM} &> /dev/null && ${PM2} --help &> /dev/null; then
+    if { command -v ${PM} && command -v ${PM2} --help; } >/dev/null 2>&1; then
         yellowOkAnim "Using ${PM} package manager."
         osID=4
         pmID=3
@@ -119,7 +114,7 @@ elif cat /etc/*release | grep ^NAME | grep Red &>/dev/null; then  # RedHat Distr
     PM=yum
     PM2=rpm
     greenOkAnim "RedHat detected!"
-    if type ${PM} &> /dev/null && ${PM2} --help &> /dev/null; then
+    if { command -v ${PM} && command -v ${PM2} --help; } >/dev/null 2>&1; then
         yellowOkAnim "Using ${PM} package manager."
         osID=5
         pmID=3
@@ -130,7 +125,7 @@ elif cat /etc/*release | grep ^NAME | grep Arch &>/dev/null; then # Arch Distrib
     OS=Arch
     PM=pacman
     greenOkAnim "Arch detected!"
-    if type ${PM} &> /dev/null; then
+    if { command -v ${PM}; } >/dev/null 2>&1; then
         yellowOkAnim "Using ${PM} package manager."
         osID=6
         pmID=5
@@ -142,7 +137,7 @@ elif cat /etc/*release | grep ^NAME | grep Fedora &>/dev/null; then # Fedora Dis
     PM=dnf
     PM2=rpm
     greenOkAnim "Fedora detected!"
-    if type ${PM} &> /dev/null && ${PM2} --help &> /dev/null; then
+    if { command -v ${PM} && command -v ${PM2} --help; } >/dev/null 2>&1; then
         yellowOkAnim "Using ${PM} package manager."
         osID=7
         pmID=4
@@ -154,7 +149,7 @@ elif cat /etc/*release | grep ^NAME | grep Mint &>/dev/null; then # Mint Distrib
     PM=apt
     PM2=dpkg
     greenOkAnim "Mint detected!"
-    if type ${PM} &> /dev/null && ${PM2} --help &> /dev/null; then
+    if { command -v ${PM} && command -v ${PM2} --help; } >/dev/null 2>&1; then
         yellowOkAnim "Using ${PM} package manager."
         osID=8
         pmID=1
@@ -170,81 +165,167 @@ function checkInstall {
     if [ "$pmID" == "1" ] && [ "`dpkg-query -s $1 2>/dev/null`" == "" ]; then # apt / dpkg
         greenOkAnim "Installing package $1"
         apt-get install -y $1
-    elif [ "$pmID" == "2" ] && [ "`rpm -qa | grep $1 2>/dev/null`" == "" ]; then # yzpper / rpm
+    elif [ "$pmID" == "2" ] && [ "`rpm -qa | grep ^$1 2>/dev/null`" == "" ]; then # yzpper / rpm
         greenOkAnim "Installing package $1"
         zypper install -y $1
-    elif [ "$pmID" == "3" ] && [ "`rpm -qa | grep $1 2>/dev/null`" == "" ]; then # yum / rpm
+    elif [ "$pmID" == "3" ] && [ "`rpm -qa | grep ^$1 2>/dev/null`" == "" ]; then # yum / rpm
         greenOkAnim "Installing package $1"
         yum install -y $1
-    elif [ "$pmID" == "4" ] && [ "`rpm -qa | grep $1 2>/dev/null`" == "" ]; then # dnf / rpm
+    elif [ "$pmID" == "4" ] && [ "`rpm -qa | grep ^$1 2>/dev/null`" == "" ]; then # dnf / rpm
         greenOkAnim "Installing package $1"
         dnf install -y $1
     elif [ "$pmID" == "5" ] && [ "`pacman -Qi $1 2>/dev/null`" == "" ]; then # pacman
         greenOkAnim "Installing package $1"
         pacman -S --noconfirm $1
     else
-        yellowOkAnim "Package $1 already installed. Skip!"
+        yellowMessage "Package $1 already installed. Skip!"
     fi
 }
 
 # Check packages for the installer.
-cyanMessage " "
-cyanMessage "Check installer packages?"
-cyanMessage "*Are the following packages installed (wget, curl and tar)?"
-OPTIONS=("Check and install" "Skip" "Quit")
-select OPTION in "${OPTIONS[@]}"; do
-    case "$REPLY" in
-        1|2 ) break;;
-        3 ) okQuit;;
-        *) invalidOption;continue;;
-    esac
-done
-	
-if [ "$OPTION" == "Check and install" ]; then
+if ! { command -v curl && command -v wget && command -v tar; } >/dev/null 2>&1; then
     cyanMessage " "
-    greenOkAnim "# Installing necessary TeaSpeak-Installer packages..."
-    checkInstall wget
-    checkInstall curl
-    checkInstall tar
-    greenOkAnim "DONE!"
-elif [ "$OPTION" == "Skip" ]; then
-    yellowOkAnim "Package check skiped."
-fi
+    redMessage "WARNING: One of curl, wget or tar is not installed!"
+    cyanMessage "Install needed packages?"
+    cyanMessage "*The installer needs wget, curl and tar to run."
+    OPTIONS=("Yes" "Quit")
+    select OPTION in "${OPTIONS[@]}"; do
+        case "$REPLY" in
+            1 ) break;;
+            2 ) okQuit;;
+            *) invalidOption;continue;;
+        esac
+    done
 	
-# Auto updater.
+    if [ "$OPTION" == "Yes" ]; then
+        cyanMessage " "
+        greenOkAnim "# Installing necessary TeaSpeak-Installer packages..."
+        checkInstall wget
+        checkInstall curl
+        checkInstall tar
+        greenOkAnim "DONE!"
+    fi
+fi
+
+# Repositories check over https.
+cyanMessage " "
+cyanMessage "Checking if the repositories are online and healthy..."
+
+teaspeakRepoName="TeaSpeak"
+teaspeakURLCheck=https://repo.teaspeak.de
+
+githubRepoName="Github"
+githubURLCheck=https://github.com
+
+centosRepoName="CentOS: NUX Desktop"
+centosURLCheck=https://li.nux.ro/download
+
+fedoraRepoName="Fedora: RPM Fusion"
+fedoraURLCheck=https://download1.rpmfusion.org
+
+getTeaspeakStatus=$(curl -s --connect-timeout 3 -LI ${teaspeakURLCheck} -o /dev/null -w %{http_code} 2>&1)
+getGithubStatus=$(curl -s --connect-timeout 3 -LI ${githubURLCheck} -o /dev/null -w %{http_code} 2>&1)
+if [ "$osID" == "4" ]; then
+    getCentosStatus=$(curl -s --connect-timeout 3 -LI ${centosURLCheck} -o /dev/null -w %{http_code} 2>&1)
+    check_repo=( "$getTeaspeakStatus" "$getGithubStatus" "$getCentosStatus")
+    check_repo2=( "$teaspeakRepoName" "$githubRepoName" "$centosRepoName")
+elif [ "$osID" == "7" ]; then
+    getFedoraStatus=$(curl -s --connect-timeout 3 -LI ${fedoraURLCheck} -o /dev/null -w %{http_code} 2>&1)
+    check_repo=( "$getTeaspeakStatus" "$getGithubStatus" "$getFedoraStatus" )
+    check_repo2=( "$teaspeakRepoName" "$githubRepoName" "$fedoraRepoName" )
+else
+    check_repo=( "$getTeaspeakStatus" "$getGithubStatus" )
+    check_repo2=( "$teaspeakRepoName" "$githubRepoName" )
+fi
+
+for ((i=0;i<${#check_repo[@]};++i)); do
+    if [ "${check_repo[i]}" == "200" ]; then
+        greenMessage ""${check_repo2[i]}" Repository is healthy. All is good!"
+    else
+        redMessage ""${check_repo2[i]}" Repository seems to be unavailable!"
+        if [ "${check_repo[i]}" == "000" ]; then
+            errorExit "URL cannot be found, maybe this URL does not exist?"
+        else
+            errorExit "HTTP status code: "${check_repo[i]}""
+        fi
+    fi
+done
+
+# Unlock links if check was successful.
+# TeaSpeak Repository
+if [ "$getTeaspeakStatus" == "200" ]; then
+    TEASPEAK_VERSION=$(curl -s --connect-timeout 60 -S -k https://repo.teaspeak.de/latest)
+    REQUEST_URL="https://repo.teaspeak.de/server/linux/x64/TeaSpeak-${TEASPEAK_VERSION}.tar.gz"
+fi
+
+# Github Repository.
+if [ "$getGithubStatus" == "200" ]; then
+    INSTALLER_REPO_URL="https://api.github.com/repos/Sporesirius/TeaSpeak-Installer/releases/latest"
+    LATEST_VERSION=`wget -q --timeout=60 -O - ${INSTALLER_REPO_URL} | grep -Po '(?<="tag_name": ")([0-9]\.[0-9]+)'`
+    GET_NEW_VERSION="https://github.com/Sporesirius/TeaSpeak-Installer/archive/${LATEST_VERSION}.tar.gz"
+fi
+
+# CentOS: NUX Desktop Repository.
+if [ "$osID" == "4" ]; then
+    if [ "$getCentosStatus" == "200" ]; then
+        CENTOS_REPO="https://li.nux.ro/download/nux/dextop/el7/x86_64/nux-dextop-release-0-5.el7.nux.noarch.rpm"
+    fi
+fi
+
+# Fedora: RPM Fusion Repository.
+if [ "$osID" == "7" ]; then
+    if [ "$getFedoraStatus" == "200" ]; then
+        FEDORA_REPO="https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-24.noarch.rpm"
+    fi
+fi
+greenOkAnim "DONE!"
+
+# Auto updater
 cyanMessage " "
 cyanMessage "Checking for the latest installer version..."
-TEASPEAK_VERSION=$(curl --connect-timeout 60 -s -S -k https://repo.teaspeak.de/latest)
-REQUEST_URL="https://repo.teaspeak.de/server/linux/x64/TeaSpeak-${TEASPEAK_VERSION}.tar.gz"
-INSTALLER_REPO_URL="https://api.github.com/repos/Sporesirius/TeaSpeak-Installer/releases/latest"
-LATEST_VERSION=`wget -q --timeout=60 -O - ${INSTALLER_REPO_URL} | grep -Po '(?<="tag_name": ")([0-9]\.[0-9]+)'`
-GET_NEW_VERSION="https://github.com/Sporesirius/TeaSpeak-Installer/archive/${LATEST_VERSION}.tar.gz"
-
 if [ "`printf "${LATEST_VERSION}\n${INSTALLER_VERSION}" | sort -V | tail -n 1`" != "$INSTALLER_VERSION" ]; then
-    redWarnAnim "New version available. Downloading new installer version..."
-    wget --timeout=60 ${GET_NEW_VERSION} -O installer_latest.tar.gz
-    greenOkAnim "DONE!"
-
+    redMessage "New version ${LATEST_VERSION} available!"
+    yellowMessage "You are using the version ${INSTALLER_VERSION}."
     cyanMessage " "
-    greenOkAnim "# Unpacking installer and replace the old installer with the new one."
-    tar -xzf installer_latest.tar.gz
-    rm installer_latest.tar.gz
-    cd TeaSpeak-Installer-*
-    cp teaspeak_install.sh ../teaspeak_install.sh
-    cd ..
-    rm -R TeaSpeak-Installer-*
-    greenOkAnim "DONE!"
+    cyanMessage "Do you want to update the installer script?"
+    OPTIONS=("Download" "Skip" "Quit")
+    select OPTION in "${OPTIONS[@]}"; do
+        case "$REPLY" in
+            1|2 ) break;;
+            3 ) okQuit;;
+            *) invalidOption;continue;;
+        esac
+    done
 
-    cyanMessage " "
-    greenOkAnim "# Making new script executable."
-    chmod 774 teaspeak_install.sh
-    greenOkAnim "DONE!"
+    if [ "$OPTION" == "Download" ]; then
+        cyanMessage " "
+        greenOkAnim "# Downloading new installer version..."
+        wget --timeout=60 ${GET_NEW_VERSION} -O installer_latest.tar.gz
+        greenOkAnim "DONE!"
 
-    cyanMessage " "
-    greenOkAnim "# Restarting script now"
-    clear
-    ./teaspeak_install.sh
-    exit 0
+        cyanMessage " "
+        greenOkAnim "# Unpacking installer and replace the old installer with the new one."
+        tar -xzf installer_latest.tar.gz
+        rm installer_latest.tar.gz
+        cd TeaSpeak-Installer-*
+        cp teaspeak_install.sh ../teaspeak_install.sh
+        cd ..
+        rm -R TeaSpeak-Installer-*
+        greenOkAnim "DONE!"
+
+        cyanMessage " "
+        greenOkAnim "# Making new script executable."
+        chmod 774 teaspeak_install.sh
+        greenOkAnim "DONE!"
+
+        cyanMessage " "
+        greenOkAnim "# Restarting script now"
+        clear
+        ./teaspeak_install.sh
+        exit 0
+    elif [ "$OPTION" == "Skip" ]; then
+        yellowOkAnim "New installer version skiped."
+    fi
 else
     greenOkAnim "# You are using the up to date version ${INSTALLER_VERSION}."
 fi
@@ -385,7 +466,7 @@ if [ "$noUser" == "false" ]; then
     done
 
     if [ "$OPTION" == "Create key" ]; then
-       if type ssh-keygen &> /dev/null; then
+       if { command -v ssh-keygen; } >/dev/null 2>&1; then
             groupadd $teaUser
             mkdir -p /$teaPath
             useradd -m -b /$teaPath -s /bin/bash -g $teaUser $teaUser
@@ -399,7 +480,7 @@ if [ "$noUser" == "false" ]; then
             cd /$teaPath/$teaUser/.ssh
 
             cyanMessage " "
-            cyanMessage "It is recommended but not required to set a password"
+            cyanMessage "It is recommended, but not required to set a password."
             su -c "ssh-keygen -t rsa" $teaUser
 
             KEYNAME=`find -maxdepth 1 -name "*.pub" | head -n 1`
@@ -407,10 +488,10 @@ if [ "$noUser" == "false" ]; then
             if [ "$KEYNAME" != "" ]; then
                 su -c "cat $KEYNAME >> authorized_keys" $teaUser
             else
-                errorExit "Can't find ssh-keygen to create a key!"
+                redMessage "Could not find a key. You might need to create one manually at a later point."
             fi
         else
-            errorExit "${OS} detected, but the ${PM} or ${PM2} package manager is missing!"
+            errorExit "Can't find ssh-keygen to create a key!"
         fi
     elif [ "$OPTION" == "Set password" ]; then
         groupadd $teaUser
@@ -418,7 +499,7 @@ if [ "$noUser" == "false" ]; then
         useradd -m -b /$teaPath -s /bin/bash -g $teaUser $teaUser
 
         passwd $teaUser
-	elif [ "$OPTION" == "No Login" ]; then
+    elif [ "$OPTION" == "No Login" ]; then
         groupadd $teaUser
         mkdir -p /$teaPath
         useradd -m -b /$teaPath -s /usr/sbin/nologin -g $teaUser $teaUser
@@ -458,7 +539,6 @@ greenOkAnim "DONE!"
 
 cyanMessage " "
 greenOkAnim "Finished, TeaSpeak ${TEASPEAK_VERSION} is now installed!"
-
 
 exit 0
 
