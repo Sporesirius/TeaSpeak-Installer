@@ -5,7 +5,7 @@ Currently supported distributions:
 
 Tested:
 - Debian
-- Ubuntu
+- Ubuntu (Ubuntu Bionic 18.04 has no libav-tools, please compile it yourself.)
 - openSUSE
 - CentOS (has no libav-tools, please compile it yourself.)
 - Arch (has no libav-tools, please compile it yourself.)
