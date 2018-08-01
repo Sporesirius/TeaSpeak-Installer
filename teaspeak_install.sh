@@ -1,6 +1,6 @@
 #!/bin/bash
 
-INSTALLER_VERSION="1.9"
+INSTALLER_VERSION="1.9.1"
 
 # Colors.
 function greenMessage() {
@@ -54,13 +54,16 @@ cyanMessage " "
 redMessage "        TeaSpeak Installer"
 cyanMessage " "
 cyanMessage " "
+yellowMessage "NOTE: You can exit the script any time with CTRL+C"
+yellowMessage "      but not at every point recommendable!"
 
-# We need to be root to run the installer.
-if [ "`id -u`" != "0" ]; then
-    errorExit "Root account is required to run the install script!"
+# We need root or sudo privileges to run the installer. 
+if ! sudo -S -p '' echo -n < /dev/null 2> /dev/null ; [ "`id -u`" != "0" ] ; then 
+    errorExit "Root or sudo privileges are required to run the install script!"
 fi
 
 # Check supported Linux distributions and package manager.
+cyanMessage " "
 if cat /etc/*release | grep ^NAME | grep Debian &>/dev/null; then # Debian Distribution
     OS=Debian
     PM=apt
@@ -280,7 +283,7 @@ if [ "$osID" == "7" ]; then
 fi
 greenOkAnim "DONE!"
 
-# Auto updater
+# Auto updater.
 cyanMessage " "
 cyanMessage "Checking for the latest installer version..."
 if [ "`printf "${LATEST_VERSION}\n${INSTALLER_VERSION}" | sort -V | tail -n 1`" != "$INSTALLER_VERSION" ]; then
@@ -395,7 +398,7 @@ fi
 if [ "$osID" == "4" ] || [ "$osID" == "5" ] || [ "$osID" == "6" ] || [ "$osID" == "7" ]; then
     cyanMessage " "
     redWarnAnim "WARNING: This distribution (${OS}) has no libav-tools in its repositories, please compile it yourself."
-    redMessage "*The web client cannot be used without libav-tools!"
+    redMessage "          The web client cannot be used without libav-tools!"
 else
     checkInstall libav-tools
 fi
@@ -539,6 +542,47 @@ greenOkAnim "DONE!"
 
 cyanMessage " "
 greenOkAnim "Finished, TeaSpeak ${TEASPEAK_VERSION} is now installed!"
+
+# Start TeaSpeak in minimal mode.
+cyanMessage " "
+cyanMessage "Do you want to start TeaSpeak?"
+cyanMessage "*Please save the Serverquery login and the Serveradmin token the first time you start TeaSpeak!"
+cyanMessage "*CTRL+C = Exit"
+OPTIONS=("Start" "Finish and exit")
+select OPTION in "${OPTIONS[@]}"; do
+    case "$REPLY" in
+        1|2 ) break;;
+        *) invalidOption;continue;;
+    esac
+done
+	
+if [ "$OPTION" == "Start" ]; then
+    cyanMessage " "
+    greenOkAnim "# Starting TeaSpeak..."
+    if [ "$noUser" == "false" ]; then
+        cd /$teaPath/$teaUser; LD_LIBRARY_PATH="$LD_LIBRARY_PATH;./libs/" ./TeaSpeakServer; stty cooked echo
+    else
+        cd /$teaPath; LD_LIBRARY_PATH="$LD_LIBRARY_PATH;./libs/" ./TeaSpeakServer && stty cooked echo
+    fi
+	
+    cyanMessage " "
+    greenOkAnim "# Making new created files executable."
+    if [ "$noUser" == "false" ]; then
+        chown -R $teaUser:$teaUser /$teaPath/$teaUser/*
+        chmod 774 /$teaPath/$teaUser/*.sh
+    else
+        chown -R root:root /$teaPath/*
+        chmod 774 /$teaPath/*.sh
+    fi
+    greenOkAnim "DONE!"
+fi
+
+cyanMessage " "
+
+yellowMessage "NOTE: It is recommended to start the TeaSpeak server with the created user!"
+yellowMessage "      to start the TeaSpeak you can use the following bash scripts:"
+yellowMessage "      teastart.sh, teastart_minimal.sh, teastart_autorestart.sh and tealoop.sh."
+greenOkAnim "Script successfully completed."
 
 exit 0
 
