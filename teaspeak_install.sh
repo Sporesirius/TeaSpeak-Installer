@@ -1,6 +1,6 @@
 #!/bin/bash
 
-INSTALLER_VERSION="1.9.1"
+INSTALLER_VERSION="1.10"
 
 # Colors.
 function greenMessage() {
