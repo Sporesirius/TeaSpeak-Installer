@@ -54,13 +54,14 @@ cyanMessage " "
 redMessage "        TeaSpeak Installer"
 cyanMessage " "
 cyanMessage " "
-yellowMessage "NOTE: You can exit the script any time with CTRL+C"
-yellowMessage "      but not at every point recommendable!"
 
 # We need root or sudo privileges to run the installer. 
 if ! sudo -S -p '' echo -n < /dev/null 2> /dev/null ; [ "`id -u`" != "0" ] ; then 
     errorExit "Root or sudo privileges are required to run the install script!"
 fi
+
+yellowMessage "NOTE: You can exit the script any time with CTRL+C"
+yellowMessage "      but not at every point recommendable!"
 
 # Check supported Linux distributions and package manager.
 cyanMessage " "
