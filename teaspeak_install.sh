@@ -286,7 +286,7 @@ greenOkAnim "DONE!"
 # Auto updater.
 cyanMessage " "
 cyanMessage "Checking for the latest installer version..."
-if [ "`printf "${LATEST_VERSION}\n${INSTALLER_VERSION}" | sort -V | tail -n 1`" != "$INSTALLER_VERSION" ]; then
+if [ "`printf "${LATEST_VERSION}\n${INSTALLER_VERSION}" | sort -V | tail -n 2`" != "$INSTALLER_VERSION" ]; then
     redMessage "New version ${LATEST_VERSION} available!"
     yellowMessage "You are using the version ${INSTALLER_VERSION}."
     cyanMessage " "
