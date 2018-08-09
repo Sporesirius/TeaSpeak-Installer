@@ -1,592 +1,613 @@
 #!/bin/bash
+# TeaSpeak Installer
+# by Sporesirius and WolverinDEV
 
-INSTALLER_VERSION="1.10"
+INSTALLER_VERSION="1.11"
 
-# Colors.
-function greenMessage() {
-    echo -e "\\033[32;1m${@}\033[0m"
+function debug() {
+    #echo "debug > ${@}"
+    :
 }
 
-function cyanMessage() {
-    echo -e "\\033[36;1m${@}\033[0m"
-}
-
-function redMessage() {
-    echo -e "\\033[31;1m${@}\033[0m"
-}
-
-function yellowMessage() {
+function warn() {
     echo -e "\\033[33;1m${@}\033[0m"
 }
 
-# Errors, warnings and info.
-function errorExit() {
-    redMessage ${@}
-    exit 1
+function error() {
+    echo -e "\\033[31;1m${@}\033[0m"
 }
 
-function okQuit() {
-    redMessage "TeaSpeak Installer closed."
+function info() {
+    echo -e "\\033[36;1m${@}\033[0m"
+}
+
+function green() {
+    echo -e "\\033[32;1m${@}\033[0m"
+}
+
+function cyan() {
+    echo -e "\\033[36;1m${@}\033[0m"
+}
+
+function red() {
+    echo -e "\\033[31;1m${@}\033[0m"
+}
+
+function yellow() {
+    echo -e "\\033[33;1m${@}\033[0m"
+}
+
+function option_quit_installer() {
+    red "TeaSpeak Installer closed."
     exit 0
 }
 
-function invalidOption() {
-    redMessage "Invalid option. Try another one."
+function invalid_option() {
+    red "Invalid option. Try another one."
 }
 
-function redWarnAnim() {
-    redMessage $1
+function red_sleep() {
+    red $1
     sleep 1
 }
 
-function greenOkAnim() {
-    greenMessage $1
+function green_sleep() {
+    green $1
     sleep 1
 }
 
-function yellowOkAnim() {
-    yellowMessage $1
+function yellow_sleep() {
+    yellow $1
     sleep 1
 }
 
-cyanMessage " "
-cyanMessage " "
-redMessage "        TeaSpeak Installer"
-cyanMessage " "
-cyanMessage " "
-
-# We need root or sudo privileges to run the installer. 
-if ! sudo -S -p '' echo -n < /dev/null 2> /dev/null ; [ "`id -u`" != "0" ] ; then 
-    errorExit "Root or sudo privileges are required to run the install script!"
+# Check if sudo is installed.
+if sudo -v >/dev/null 2>&1; then
+    SUDO_PREFIX="sudo"
+    debug "Sudo installed"
+elif [ "`id -u`" != "0" ]; then
+    error "Root or sudo privileges are required to run the install script!"
+    exit 1
 fi
 
-yellowMessage "NOTE: You can exit the script any time with CTRL+C"
-yellowMessage "      but not at every point recommendable!"
-
-# Check supported Linux distributions and package manager.
-cyanMessage " "
-if cat /etc/*release | grep ^NAME | grep Debian &>/dev/null; then # Debian Distribution
-    OS=Debian
-    PM=apt
-    PM2=dpkg
-    greenOkAnim "${OS} detected!"
-    if { command -v ${PM} && command -v ${PM2} --help; } >/dev/null 2>&1; then
-        yellowOkAnim "Using ${PM} package manager."
-        osID=1
-        pmID=1
-    else
-        errorExit "${OS} detected, but the ${PM} or ${PM2} package manager is missing!"
-    fi
-elif cat /etc/*release | grep ^NAME | grep Ubuntu &>/dev/null; then # Ubuntu Distribution
-    OS=Ubuntu
-    PM=apt
-    PM2=dpkg
-    greenOkAnim "Ubuntu detected!"
-    if { command -v ${PM} && command -v ${PM2} --help; } >/dev/null 2>&1; then
-        yellowOkAnim "Using ${PM} package manager."
-        osID=2
-        pmID=1
-    else
-        errorExit "${OS} detected, but the ${PM} or ${PM2} package manager is missing!"
-    fi
-elif cat /etc/*release | grep ^NAME | grep openSUSE &>/dev/null; then # openSUSE Distribution
-    OS=openSUSE
-    PM=yzpper
-    PM2=rpm
-    greenOkAnim "openSUSE detected!"
-    if { command -v ${PM} && command -v ${PM2} --help; } >/dev/null 2>&1; then
-        yellowOkAnim "Using ${PM} package manager."
-        osID=3
-        pmID=2
-    else
-        errorExit "${OS} detected, but the ${PM} or ${PM2} package manager is missing!"
-    fi
-elif cat /etc/*release | grep ^NAME | grep CentOS &>/dev/null; then # CentOS Distribution
-    OS=CentOS
-    PM=yum
-    PM2=rpm
-    greenOkAnim "CentOS detected!"
-    if { command -v ${PM} && command -v ${PM2} --help; } >/dev/null 2>&1; then
-        yellowOkAnim "Using ${PM} package manager."
-        osID=4
-        pmID=3
-    else
-        errorExit "${OS} detected, but the ${PM} or ${PM2} package manager is missing!"
-    fi
-elif cat /etc/*release | grep ^NAME | grep Red &>/dev/null; then  # RedHat Distribution
-    OS=RedHat
-    PM=yum
-    PM2=rpm
-    greenOkAnim "RedHat detected!"
-    if { command -v ${PM} && command -v ${PM2} --help; } >/dev/null 2>&1; then
-        yellowOkAnim "Using ${PM} package manager."
-        osID=5
-        pmID=3
-    else
-        errorExit "${OS} detected, but the ${PM} or ${PM2} package manager is missing!"
-    fi
-elif cat /etc/*release | grep ^NAME | grep Arch &>/dev/null; then # Arch Distribution
-    OS=Arch
-    PM=pacman
-    greenOkAnim "Arch detected!"
-    if { command -v ${PM}; } >/dev/null 2>&1; then
-        yellowOkAnim "Using ${PM} package manager."
-        osID=6
-        pmID=5
-    else
-        errorExit "${OS} detected, but the ${PM} package manager is missing!"
-    fi
-elif cat /etc/*release | grep ^NAME | grep Fedora &>/dev/null; then # Fedora Distribution
-    OS=Fedora
-    PM=dnf
-    PM2=rpm
-    greenOkAnim "Fedora detected!"
-    if { command -v ${PM} && command -v ${PM2} --help; } >/dev/null 2>&1; then
-        yellowOkAnim "Using ${PM} package manager."
-        osID=7
-        pmID=4
-    else
-        errorExit "${OS} detected, but the ${PM} or ${PM2} package manager is missing!"
-    fi
-elif cat /etc/*release | grep ^NAME | grep Mint &>/dev/null; then # Mint Distribution
-    OS=Mint
-    PM=apt
-    PM2=dpkg
-    greenOkAnim "Mint detected!"
-    if { command -v ${PM} && command -v ${PM2} --help; } >/dev/null 2>&1; then
-        yellowOkAnim "Using ${PM} package manager."
-        osID=8
-        pmID=1
-    else
-        errorExit "${OS} detected, but the ${PM} or ${PM2} package manager is missing!"
-    fi
+# Detect architecture
+MACHINE_TYPE=`${SUDO_PREFIX} uname -m`
+if [ ${MACHINE_TYPE} == "x86_64" ]; then
+    ARCH="AMD64"
 else
-    errorExit "This Distribution is not supported!"
+    ARCH="x84"
 fi
 
-# checkInstall for package manager.
-function checkInstall {
-    if [ "$pmID" == "1" ] && [ "`dpkg-query -s $1 2>/dev/null`" == "" ]; then # apt / dpkg
-        greenOkAnim "Installing package $1"
-        apt-get install -y $1
-    elif [ "$pmID" == "2" ] && [ "`rpm -qa | grep ^$1 2>/dev/null`" == "" ]; then # yzpper / rpm
-        greenOkAnim "Installing package $1"
-        zypper install -y $1
-    elif [ "$pmID" == "3" ] && [ "`rpm -qa | grep ^$1 2>/dev/null`" == "" ]; then # yum / rpm
-        greenOkAnim "Installing package $1"
-        yum install -y $1
-    elif [ "$pmID" == "4" ] && [ "`rpm -qa | grep ^$1 2>/dev/null`" == "" ]; then # dnf / rpm
-        greenOkAnim "Installing package $1"
-        dnf install -y $1
-    elif [ "$pmID" == "5" ] && [ "`pacman -Qi $1 2>/dev/null`" == "" ]; then # pacman
-        greenOkAnim "Installing package $1"
-        pacman -S --noconfirm $1
-    else
-        yellowMessage "Package $1 already installed. Skip!"
-    fi
-}
+function detect_packet_manager() {
+    PACKET_MANAGER_NAME=""
+    PACKET_MANAGER_TEST=""
+    PACKET_MANAGER_UPDATE=""
+    PACKET_MANAGER_INSTALL=""
 
-# Check packages for the installer.
-if ! { command -v curl && command -v wget && command -v tar; } >/dev/null 2>&1; then
-    cyanMessage " "
-    redMessage "WARNING: One of curl, wget or tar is not installed!"
-    cyanMessage "Install needed packages?"
-    cyanMessage "*The installer needs wget, curl and tar to run."
-    OPTIONS=("Yes" "Quit")
-    select OPTION in "${OPTIONS[@]}"; do
-        case "$REPLY" in
-            1 ) break;;
-            2 ) okQuit;;
-            *) invalidOption;continue;;
-        esac
-    done
+    SUPPORT_SCREEN=false
+    SUPPORT_FFMPEG=false
+    SUPPORT_YTDL=false
+    SUPPORT_LIBNICE=false
+
+    NEDDED_REPO=false
 	
-    if [ "$OPTION" == "Yes" ]; then
-        cyanMessage " "
-        greenOkAnim "# Installing necessary TeaSpeak-Installer packages..."
-        checkInstall wget
-        checkInstall curl
-        checkInstall tar
-        greenOkAnim "DONE!"
-    fi
-fi
+    CentOS_REPO="https://negativo17.org/repos/epel-multimedia.repo"
+    CentOS_6_REPO="${CentOS_REPO}"
+    CentOS_7_REPO="${CentOS_REPO}"
+    RedHat_REPO="${CentOS_REPO}"
+    Fedora_REPO="https://negativo17.org/repos/fedora-multimedia.repo"
 
-# Repositories check over https.
-cyanMessage " "
-cyanMessage "Checking if the repositories are online and healthy..."
+    #<system name>| <packages>| <manager>| <repos>| <system version> (command seperated by :)
+    PACKET_MANAGERS=(
+        "Debian|screen:ffmpeg:youtube-dl:libnice10|apt:dpkg-query||"
+        "Ubuntu|screen:ffmpeg:youtube-dl:libnice10|apt:dpkg-query||"
+        "openSUSE|screen:ffmpeg:youtube-dl:libnice10|yzpper:rpm||"
+        "CentOS|screen:ffmpeg:youtube-dl:libnice:yum-utils|yum:rpm|${CentOS_6_REPO}|6"
+        "CentOS|screen:ffmpeg:youtube-dl:libnice:yum-utils|yum:rpm|${CentOS_7_REPO}|7"
+        "RedHat|screen:ffmpeg:youtube-dl:libnice:yum-utils|yum:rpm|${RedHat_REPO}|"
+        "Arch|screen:ffmpeg:youtube-dl:libnice|pacman||"
+        "Fedora|screen:ffmpeg:youtube-dl:libnice|dnf:rpm|${Fedora_REPO}|"
+        "Mint|screen:ffmpeg:youtube-dl:libnice10|apt:dpkg-query||"
+    )
+    PACKET_MANAGER_COMMANDS=(
+        "apt:dpkg-query|dpkg-query -s %s|apt update -y && ${SUDO_PREFIX} apt upgrade -y|apt install -y %s"
+        "yzpper:rpm|rpm -q %s|zypper ref && ${SUDO_PREFIX} zypper up|zypper install -y %s"
+        "yum:rpm|rpm -q %s|yum update -y|yum install -y %s"
+        "pacman|pacman -Qi %s|pacman -Syu --noconfirm|pacman -S --noconfirm %s"
+        "dnf:rpm|rpm -q %s|dnf check-update -y && ${SUDO_PREFIX} dnf upgrade -y|dnf install -y %s"
+    )
+    SYSTEM_NAME=$(cat /etc/*release | grep ^NAME)
+    SYSTEM_VERSION=$(cat /etc/*release | grep ^VERSION_ID | sed 's/[^0-9]*//g')
+    SYSTEM_NAME_DETECTED="" #Give the system out own name :D
 
-teaspeakRepoName="TeaSpeak"
-teaspeakURLCheck=https://repo.teaspeak.de
+    for system in ${PACKET_MANAGERS[@]}
+    do
+        IFS='|' read -r -a data <<< $system
+        debug "Testing ${system} => ${data[0]}"
 
-githubRepoName="Github"
-githubURLCheck=https://github.com
-
-centosRepoName="CentOS: NUX Desktop"
-centosURLCheck=https://li.nux.ro/download
-
-fedoraRepoName="Fedora: RPM Fusion"
-fedoraURLCheck=https://download1.rpmfusion.org
-
-getTeaspeakStatus=$(curl -s --connect-timeout 3 -LI ${teaspeakURLCheck} -o /dev/null -w %{http_code} 2>&1)
-getGithubStatus=$(curl -s --connect-timeout 3 -LI ${githubURLCheck} -o /dev/null -w %{http_code} 2>&1)
-if [ "$osID" == "4" ]; then
-    getCentosStatus=$(curl -s --connect-timeout 3 -LI ${centosURLCheck} -o /dev/null -w %{http_code} 2>&1)
-    check_repo=( "$getTeaspeakStatus" "$getGithubStatus" "$getCentosStatus")
-    check_repo2=( "$teaspeakRepoName" "$githubRepoName" "$centosRepoName")
-elif [ "$osID" == "7" ]; then
-    getFedoraStatus=$(curl -s --connect-timeout 3 -LI ${fedoraURLCheck} -o /dev/null -w %{http_code} 2>&1)
-    check_repo=( "$getTeaspeakStatus" "$getGithubStatus" "$getFedoraStatus" )
-    check_repo2=( "$teaspeakRepoName" "$githubRepoName" "$fedoraRepoName" )
-else
-    check_repo=( "$getTeaspeakStatus" "$getGithubStatus" )
-    check_repo2=( "$teaspeakRepoName" "$githubRepoName" )
-fi
-
-for ((i=0;i<${#check_repo[@]};++i)); do
-    if [ "${check_repo[i]}" == "200" ]; then
-        greenMessage ""${check_repo2[i]}" Repository is healthy. All is good!"
-    else
-        redMessage ""${check_repo2[i]}" Repository seems to be unavailable!"
-        if [ "${check_repo[i]}" == "000" ]; then
-            errorExit "URL cannot be found, maybe this URL does not exist?"
+        if echo "${SYSTEM_NAME}" | grep "${data[0]}" &>/dev/null && echo "${SYSTEM_VERSION}" | grep "${data[4]}" &>/dev/null; then
+            SYSTEM_NAME_DETECTED="${data[0]}"
+            SYSTEM_VERSION="${data[4]}"
+            if [ "${data[4]}" == "" ]; then
+            SYSTEM_VERSION=$(cat /etc/*release | grep ^VERSION_ID | sed 's/[^0-9]*//g')
+            fi
         else
-            errorExit "HTTP status code: "${check_repo[i]}""
+            continue
         fi
+
+        cyan " "
+        green "${SYSTEM_NAME_DETECTED} ${SYSTEM_VERSION} (${ARCH}) detected!"
+        debug "Found system ${data[0]} ${SYSTEM_VERSION} (${ARCH})"
+        for index in $(seq 2 ${#data[@]})
+        do
+            PACKET_MANAGER_NAME=${data[${index}]}
+
+            debug "Testing commands ${PACKET_MANAGER_NAME}"
+            for command in ${PACKET_MANAGER_NAME//:/ }
+            do
+                debug "Testing command ${command}"
+                if ! [ $(command -v ${command}) >/dev/null 2>&1 ]; then
+                    PACKET_MANAGER_NAME=""
+                    break
+                fi
+            done
+            if [ ${PACKET_MANAGER_NAME} != "" ]; then
+                break
+            fi
+        done
+
+        if ! [ "${PACKET_MANAGER_NAME}" == "" ]; then
+            # Supported packages.
+            echo "${data[1]}" | grep "screen" />/dev/null 2>&1
+            if [ $? -ne 0 ]; then
+                SUPPORT_SCREEN=true
+            fi
+			
+            echo "${data[1]}" | grep "ffmpeg" />/dev/null 2>&1
+            if [ $? -ne 0 ]; then
+                SUPPORT_FFMPEG=true
+            fi
+			
+            echo "${data[1]}" | grep "youtube-dl" />/dev/null 2>&1
+            if [ $? -ne 0 ]; then
+                SUPPORT_YTDL=true
+            fi
+			
+            echo "${data[1]}" | grep "(libnice|libnice10)" />/dev/null 2>&1
+            if [ $? -ne 0 ]; then
+                SUPPORT_LIBNICE=true
+            fi
+
+            # Additional repository enabled.
+            if [ "${data[3]}" != "" ]; then
+                debug "Additional repo needed"
+                NEDDED_REPO=true
+            fi
+            break
+        fi
+    done
+
+    if [ "${PACKET_MANAGER_NAME}" == "" ]; then
+        error "Failed to determinate your system and the packet manager on it! (System: ${SYSTEM_NAME})"
+        return 1
     fi
-done
 
-# Unlock links if check was successful.
-# TeaSpeak Repository
-if [ "$getTeaspeakStatus" == "200" ]; then
-    TEASPEAK_VERSION=$(curl -s --connect-timeout 60 -S -k https://repo.teaspeak.de/latest)
-    REQUEST_URL="https://repo.teaspeak.de/server/linux/x64/TeaSpeak-${TEASPEAK_VERSION}.tar.gz"
-fi
+    IFS='~'
+    for manager_commands in ${PACKET_MANAGER_COMMANDS[@]}
+    do
+        IFS='|' read -r -a commands <<< $manager_commands
 
-# Github Repository.
-if [ "$getGithubStatus" == "200" ]; then
+        if [ "${commands[0]}" == "${PACKET_MANAGER_NAME}" ]; then
+            PACKET_MANAGER_INSTALL="${commands[3]}"
+            PACKET_MANAGER_UPDATE="${commands[2]}"
+            PACKET_MANAGER_TEST="${commands[1]}"
+            break
+        fi
+    done
+
+    if [ "${PACKET_MANAGER_INSTALL}" == "" ]; then
+        error "Failed to find packet manager commands for manager (${PACKET_MANAGER_NAME})"
+        return 1
+    fi
+
+    info "Got packet manager commands:"
+    info "Install                    : ${PACKET_MANAGER_INSTALL}"
+    info "Update                     : ${PACKET_MANAGER_UPDATE}"
+    info "Test                       : ${PACKET_MANAGER_TEST}"
+    info "Packet screen support      : ${SUPPORT_SCREEN}"
+    info "Packet ffmpeg support      : ${SUPPORT_FFMPEG}"
+    info "Packet youtube-dl support  : ${SUPPORT_YTDL}"
+    info "Packet libnice support     : ${SUPPORT_LIBNICE}"
+    info "Additional repository      : ${NEDDED_REPO}"
+    debug "${data[3]}"
+    return 0
+}
+
+function test_installed() {
+    local require_install=()
+
+    for package in "${@}"
+    do
+        local command=$(printf ${PACKET_MANAGER_TEST} "${package}")
+        debug ${command}
+        eval "${command}" &>/dev/null
+        if [ $? -ne 0 ]; then
+            cyan " "
+            warn "${package} is required, but missing!"
+            require_install+=(${package})
+        fi
+    done
+
+    if [ ${#require_install[@]} -lt 1 ]; then
+        echo ${#require_install[@]} &>/dev/null
+        return 0
+    fi
+
+    packages=$(printf " %s" "${require_install[@]}")
+    packages=${packages:1}
+
+    packages_human=$(printf ", \"%s\"" "${require_install[@]}")
+    packages_human=${packages_human:2}
+
+    cyan "Should we install "${packages_human}" for you? (Required root or administrator privileges)"
+    OPTIONS=("Yes" "No" "Quit")
+    select OPTION in "${OPTIONS[@]}"; do
+        case "$REPLY" in
+            1|2) break;;
+            3 ) option_quit_installer;;
+            *)  invalid_option; continue;;
+        esac
+    done
+
+    if [ "$OPTION" == "${OPTIONS[0]}" ]; then
+        green_sleep "# Installing "${packages_human}" package..."
+        local command=$(printf ${PACKET_MANAGER_INSTALL} "${packages}")
+        debug ${SUDO_PREFIX} ${command}
+        eval "${SUDO_PREFIX} ${command}"
+        green_sleep "DONE!"
+        if [ $? -ne 0 ]; then
+            error "Failed to install required packages!"
+            exit 1
+        fi
+        return 0
+    fi
+    return 2
+}
+
+function updateScript() {
     INSTALLER_REPO_URL="https://api.github.com/repos/Sporesirius/TeaSpeak-Installer/releases/latest"
-    LATEST_VERSION=`wget -q --timeout=60 -O - ${INSTALLER_REPO_URL} | grep -Po '(?<="tag_name": ")([0-9]\.[0-9]+)'`
-    GET_NEW_VERSION="https://github.com/Sporesirius/TeaSpeak-Installer/archive/${LATEST_VERSION}.tar.gz"
-fi
+    INSTALLER_REPO_PACKAGE="https://github.com/Sporesirius/TeaSpeak-Installer/archive/%s.tar.gz"
 
-# CentOS: NUX Desktop Repository.
-if [ "$osID" == "4" ]; then
-    if [ "$getCentosStatus" == "200" ]; then
-        CENTOS_REPO="https://li.nux.ro/download/nux/dextop/el7/x86_64/nux-dextop-release-0-5.el7.nux.noarch.rpm"
+    cyan " "
+    cyan "Checking for the latest installer version..."
+    LATEST_VERSION=$(curl -s --connect-timeout 10 -S -L ${INSTALLER_REPO_URL} | grep -Po '(?<="tag_name": ")([0-9]\.[0-9]+)')
+    if [ $? -ne 0 ]; then
+        warn "Failed to check for updates for this script!"
+        return 1
     fi
-fi
 
-# Fedora: RPM Fusion Repository.
-if [ "$osID" == "7" ]; then
-    if [ "$getFedoraStatus" == "200" ]; then
-        FEDORA_REPO="https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-24.noarch.rpm"
-    fi
-fi
-greenOkAnim "DONE!"
+    if [ "`printf "${LATEST_VERSION}\n${INSTALLER_VERSION}" | sort -V | tail -n 1`" != "$INSTALLER_VERSION" ]; then
+        red "New version ${LATEST_VERSION} available!"
+        yellow "You are using the version ${INSTALLER_VERSION}."
+        cyan " "
+        cyan "Do you want to update the installer script?"
+        OPTIONS=("Download" "Skip" "Quit")
+        select OPTION in "${OPTIONS[@]}"; do
+            case "$REPLY" in
+                1|2 ) break;;
+                3 ) option_quit_installer;;
+                *)  invalid_option; continue;;
+            esac
+        done
 
-# Auto updater.
-cyanMessage " "
-cyanMessage "Checking for the latest installer version..."
-if [ "`printf "${LATEST_VERSION}\n${INSTALLER_VERSION}" | sort -V | tail -n 1`" != "$INSTALLER_VERSION" ]; then
-    redMessage "New version ${LATEST_VERSION} available!"
-    yellowMessage "You are using the version ${INSTALLER_VERSION}."
-    cyanMessage " "
-    cyanMessage "Do you want to update the installer script?"
-    OPTIONS=("Download" "Skip" "Quit")
-    select OPTION in "${OPTIONS[@]}"; do
-        case "$REPLY" in
-            1|2 ) break;;
-            3 ) okQuit;;
-            *) invalidOption;continue;;
-        esac
-    done
+        if [ "$OPTION" == "${OPTIONS[0]}" ]; then
+            cyan " "
+            green_sleep "# Downloading new installer version..."
+            ${SUDO_PREFIX} curl -s --connect-timeout 10 -S -L `printf ${INSTALLER_REPO_PACKAGE} "${LATEST_VERSION}"` -o installer_latest.tar.gz
+            if [ $? -ne 0 ]; then
+                warn "Failed to download update. Update failed!"
+                return 1
+            fi
+            green_sleep "Done!"
 
-    if [ "$OPTION" == "Download" ]; then
-        cyanMessage " "
-        greenOkAnim "# Downloading new installer version..."
-        wget --timeout=60 ${GET_NEW_VERSION} -O installer_latest.tar.gz
-        greenOkAnim "DONE!"
+            cyan " "
+            green_sleep "# Unpacking installer and replace the old installer with the new one."
+            ${SUDO_PREFIX} tar -xzf installer_latest.tar.gz
+            ${SUDO_PREFIX} rm installer_latest.tar.gz
+            ${SUDO_PREFIX} cp TeaSpeak-Installer-*/teaspeak_install.sh teaspeak_install.sh
+            ${SUDO_PREFIX} rm -r TeaSpeak-Installer-*
+            green_sleep "Done!"
 
-        cyanMessage " "
-        greenOkAnim "# Unpacking installer and replace the old installer with the new one."
-        tar -xzf installer_latest.tar.gz
-        rm installer_latest.tar.gz
-        cd TeaSpeak-Installer-*
-        cp teaspeak_install.sh ../teaspeak_install.sh
-        cd ..
-        rm -R TeaSpeak-Installer-*
-        greenOkAnim "DONE!"
+            cyan " "
+            green_sleep "# Adjustign script rights for execution."
+            ${SUDO_PREFIX} chmod 774 teaspeak_install.sh
+            green_sleep "Done!"
 
-        cyanMessage " "
-        greenOkAnim "# Making new script executable."
-        chmod 774 teaspeak_install.sh
-        greenOkAnim "DONE!"
-
-        cyanMessage " "
-        greenOkAnim "# Restarting script now"
-        clear
-        ./teaspeak_install.sh
-        exit 0
-    elif [ "$OPTION" == "Skip" ]; then
-        yellowOkAnim "New installer version skiped."
-    fi
-else
-    greenOkAnim "# You are using the up to date version ${INSTALLER_VERSION}."
-fi
-
-# Update system and install TeaSpeak packages.
-cyanMessage " "
-cyanMessage "Update the system packages to the latest version?"
-cyanMessage "*It is recommended to update the system, otherwise dependencies might brake!"
-OPTIONS=("Update" "Skip" "Quit")
-select OPTION in "${OPTIONS[@]}"; do
-    case "$REPLY" in
-        1|2 ) break;;
-        3 ) okQuit;;
-        *) invalidOption;continue;;
-    esac
-done
-	
-if [ "$OPTION" == "Update" ]; then
-    greenOkAnim "# Updating the system packages..."
-    if [ "$pmID" == "1" ]; then # apt / dpkg
-        apt-get update && apt-get upgrade -y && apt-get dist-upgrade -y
-    elif [ "$pmID" == "2" ]; then # yzpper / rpm
-        zypper ref && zypper up
-    elif [ "$pmID" == "3" ]; then # yum / rpm
-        yum update -y
-    elif [ "$pmID" == "4" ]; then # dnf / rpm
-        dnf check-update -y && dnf upgrade -y
-    elif [ "$pmID" == "5" ]; then # pacman
-        pacman -Syu --noconfirm
-    fi
-    greenOkAnim "DONE!"
-elif [ "$OPTION" == "Skip" ]; then
-    yellowOkAnim "System update skiped."
-fi
-    
-cyanMessage " "
-greenOkAnim "# Installing necessary TeaSpeak packages..."
-checkInstall screen
-if [ "$osID" == "4" ] || [ "$osID" == "7" ]; then
-    cyanMessage " "
-    yellowOkAnim "NOTE: This distribution (${OS}) requires additional repositories to install ffmpeg!"
-    cyanMessage "Do you want to add the extra repository and install ffmpeg?"
-    cyanMessage "*Required if you want to use the musicbot."
-    OPTIONS=("Install" "Skip" "Quit")
-    select OPTION in "${OPTIONS[@]}"; do
-        case "$REPLY" in
-            1|2 ) break;;
-            3 ) okQuit;;
-            *) invalidOption;continue;;
-        esac
-    done
-	
-    if [ "$OPTION" == "Install" ]; then
-        if [ "$osID" == "4" ]; then
-            checkInstall ${CENTOS_REPO}
-            checkInstall ffmpeg
-        elif [ "$osID" == "7" ]; then
-            checkInstall ${FEDORA_REPO}
-            checkInstall ffmpeg
+            cyan " "
+            green_sleep "# Restarting update script!"
+            sleep 3
+            clear
+            ${SUDO_PREFIX} ./teaspeak_install.sh
+            exit 0
         fi
-    elif [ "$OPTION" == "Skip" ]; then
-        yellowOkAnim "Additional repositories and package ffmpeg skiped."
+        if [ $? -ne 0 ]; then
+            yellow_sleep "New installer version skiped."
+        fi
+    else
+        green_sleep "# You are using the up to date version ${INSTALLER_VERSION}."
     fi
-else
-    checkInstall ffmpeg
-fi
-if [ "$osID" == "4" ] || [ "$osID" == "5" ] || [ "$osID" == "6" ] || [ "$osID" == "7" ]; then
-    cyanMessage " "
-    redWarnAnim "WARNING: This distribution (${OS}) has no libav-tools in its repositories, please compile it yourself."
-    redMessage "          The web client cannot be used without libav-tools!"
-else
-    checkInstall libav-tools
-fi
-# Install youtube-dl.
-cyanMessage " "
-cyanMessage "Do you want to install youtube-dl?"
-cyanMessage "*Required if you want to use the musicbot with youtube."
-OPTIONS=("Install" "Skip" "Quit")
-select OPTION in "${OPTIONS[@]}"; do
-    case "$REPLY" in
-        1|2 ) break;;
-        3 ) okQuit;;
-        *) invalidOption;continue;;
-    esac
-done
-	
-if [ "$OPTION" == "Install" ]; then
-    checkInstall youtube-dl
-elif [ "$OPTION" == "Skip" ]; then
-    yellowOkAnim "Package youtube-dl skiped."
-fi
-greenOkAnim "DONE!"
-	
-# Create user, yes or no?
-cyanMessage " "
-cyanMessage "Do you want to create a TeaSpeak user?"
-cyanMessage "*It is recommended to create a separated TeaSpeak user!"
-OPTIONS=("Yes" "No" "Quit")
-select OPTION in "${OPTIONS[@]}"; do
-    case "$REPLY" in
-        1|2 ) break;;
-        3 ) okQuit;;
-        *) invalidOption;continue;;
-    esac
-done
-	
-if [ "$OPTION" == "Yes" ]; then
-    cyanMessage " "
-    cyanMessage "Please enter the name of the TeaSpeak user."
-    read teaUser
-    noUser=false
-elif [ "$OPTION" == "No" ]; then
-    yellowOkAnim "User creation skiped."
-    noUser=true
-fi
-	
-# TeaSpeak install path.
-cyanMessage " "
-cyanMessage "Please enter the TeaSpeak installation path."
-cyanMessage "Empty input = /home/ | Example input = /srv/"
-read teaPath
-if [[ -z "$teaPath" ]]; then
-    teaPath='home'
-fi
-	
-# Key, password or disabled login.
-if [ "$noUser" == "false" ]; then
-    cyanMessage " "
-    cyanMessage "Create key, set password or set no login?"
+}
+
+function secure_user() {
+    cyan " "
+    cyan "Create key, set password or set no login?"
 
     OPTIONS=("Create key" "Set password" "No Login" "Quit")
     select OPTION in "${OPTIONS[@]}"; do
         case "$REPLY" in
             1|2|3 ) break;;
-            4 ) okQuit;;
-            *) invalidOption;continue;;
+            4 ) option_quit_installer;;
+            *) invalid_option;continue;;
         esac
     done
 
-    if [ "$OPTION" == "Create key" ]; then
-       if { command -v ssh-keygen; } >/dev/null 2>&1; then
-            groupadd $teaUser
-            mkdir -p /$teaPath
-            useradd -m -b /$teaPath -s /bin/bash -g $teaUser $teaUser
-
-            if [ -d /$teaPath/$teaUser/.ssh ]; then
-                rm -rf /$teaPath/$teaUser/.ssh
+    if [ "$OPTION" == "${OPTIONS[0]}" ]; then
+        if { command -v ssh-keygen; } >/dev/null 2>&1; then
+            ${SUDO_PREFIX} groupadd $teaUser
+            ${SUDO_PREFIX} mkdir -p /$teaPath
+            ${SUDO_PREFIX} useradd -m -b /$teaPath -s /bin/bash -g $teaUser $teaUser
+            if [ $? -ne 0 ]; then
+                error "Failed to create the TeaSpeak user!"
+                exit 1
             fi
 
-            mkdir -p /$teaPath/$teaUser/.ssh
-            chown $teaUser:$teaUser /$teaPath/$teaUser/.ssh
-            cd /$teaPath/$teaUser/.ssh
+            if [ -d /$TEASPEAK_DIR/.ssh ]; then
+                ${SUDO_PREFIX} rm -rf /$TEASPEAK_DIR/.ssh
+            fi
 
-            cyanMessage " "
-            cyanMessage "It is recommended, but not required to set a password."
-            su -c "ssh-keygen -t rsa" $teaUser
+            ${SUDO_PREFIX} mkdir -p /$TEASPEAK_DIR/.ssh
+            ${SUDO_PREFIX} chown $teaUser:$teaUser /$TEASPEAK_DIR/.ssh
+            cd /$TEASPEAK_DIR/.ssh
+
+            cyan " "
+            cyan "It is recommended, but not required to set a password."
+            ${SUDO_PREFIX} su -c "ssh-keygen -t rsa" $teaUser
+            if [ $? -ne 0 ]; then
+                error "Failed to create a SSH Key!"
+                exit 1
+            fi
 
             KEYNAME=`find -maxdepth 1 -name "*.pub" | head -n 1`
 
             if [ "$KEYNAME" != "" ]; then
-                su -c "cat $KEYNAME >> authorized_keys" $teaUser
-            else
-                redMessage "Could not find a key. You might need to create one manually at a later point."
+                ${SUDO_PREFIX} su -c "cat $KEYNAME >> authorized_keys" $teaUser
+                if [ $? -ne 0 ]; then
+                    error "Could not find a key!"
+                    exit 1
+                fi
             fi
-        else
-            errorExit "Can't find ssh-keygen to create a key!"
         fi
-    elif [ "$OPTION" == "Set password" ]; then
-        groupadd $teaUser
-        mkdir -p /$teaPath
-        useradd -m -b /$teaPath -s /bin/bash -g $teaUser $teaUser
-
-        passwd $teaUser
-    elif [ "$OPTION" == "No Login" ]; then
-        groupadd $teaUser
-        mkdir -p /$teaPath
-        useradd -m -b /$teaPath -s /usr/sbin/nologin -g $teaUser $teaUser
+    elif [ "$OPTION" == "${OPTIONS[1]}" ]; then
+        ${SUDO_PREFIX} groupadd $teaUser
+        ${SUDO_PREFIX} mkdir -p /$teaPath
+        ${SUDO_PREFIX} useradd -m -b /$teaPath -s /bin/bash -g $teaUser $teaUser
+        if [ $? -ne 0 ]; then
+            error "Failed to create the TeaSpeak user! Maybe incorrect password?"
+            exit 1
+        fi
+        ${SUDO_PREFIX} passwd $teaUser
+    elif [ "$OPTION" == "${OPTIONS[2]}" ]; then
+        ${SUDO_PREFIX} groupadd $teaUser
+        ${SUDO_PREFIX} mkdir -p /$teaPath
+        ${SUDO_PREFIX} useradd -m -b /$teaPath -s /usr/sbin/nologin -g $teaUser $teaUser
+        if [ $? -ne 0 ]; then
+            error "Failed to create the TeaSpeak user!"
+            exit 1
+        fi
     fi
+}
+
+cyan " "
+cyan " "
+red "        TeaSpeak Installer"
+cyan "       by Sporesirius and WolverinDEV"
+cyan " "
+
+yellow "NOTE: You can exit the script any time with CTRL+C"
+yellow "      but not at every point recommendable!"
+
+detect_packet_manager
+if [ $? -ne 0 ]; then
+    error "Exiting installer"
+    unset IFS;
+    exit 1
 fi
-	
-if [ "$noUser" == "false" ]; then
-    cd /$teaPath/$teaUser/
-else
-    mkdir -p /$teaPath
-    cd /$teaPath/
+
+test_installed curl
+test_installed tar
+if [ $? -ne 0 ]; then
+    error "Failed to install required packages for the installer!"
+    exit 1
 fi
-	
-# Downloading and setting up TeaSpeak.
-cyanMessage " "
-cyanMessage "Getting TeaSpeak version..."
-greenOkAnim "# Newest version is ${TEASPEAK_VERSION}"
 
-cyanMessage " "
-greenOkAnim "# Downloading ${REQUEST_URL}"
-curl --connect-timeout 60 -s -S "$REQUEST_URL" -o teaspeak_latest.tar.gz
-greenOkAnim "# Unpacking and removing .tar.gz"
-tar -xzf teaspeak_latest.tar.gz
-rm teaspeak_latest.tar.gz
-greenOkAnim "DONE!"
-
-cyanMessage " "
-greenOkAnim "# Making scripts executable."
-if [ "$noUser" == "false" ]; then
-    chown -R $teaUser:$teaUser /$teaPath/$teaUser/*
-    chmod 774 /$teaPath/$teaUser/*.sh
-else
-    chown -R root:root /$teaPath/*
-    chmod 774 /$teaPath/*.sh
+updateScript
+if [ $? -ne 0 ]; then
+    error "Failed to update script!"
+    exit 1
 fi
-greenOkAnim "DONE!"
 
-cyanMessage " "
-greenOkAnim "Finished, TeaSpeak ${TEASPEAK_VERSION} is now installed!"
-
-# Start TeaSpeak in minimal mode.
-cyanMessage " "
-cyanMessage "Do you want to start TeaSpeak?"
-cyanMessage "*Please save the Serverquery login and the Serveradmin token the first time you start TeaSpeak!"
-cyanMessage "*CTRL+C = Exit"
-OPTIONS=("Start" "Finish and exit")
+# Update system and install TeaSpeak packages.
+cyan " "
+cyan "Update the system packages to the latest version?"
+cyan "*It is recommended to update the system, otherwise dependencies might brake!"
+OPTIONS=("Update" "Skip" "Quit")
 select OPTION in "${OPTIONS[@]}"; do
     case "$REPLY" in
         1|2 ) break;;
-        *) invalidOption;continue;;
+        3 ) option_quit_installer;;
+        *) invalid_option;continue;;
+    esac
+done
+
+if [ "$OPTION" == "${OPTIONS[0]}" ]; then
+    green_sleep "# Updating the system packages..."
+    eval "${SUDO_PREFIX} ${PACKET_MANAGER_UPDATE}"
+    green_sleep "DONE!"
+elif [ "$OPTION" == "Skip" ]; then
+    yellow_sleep "System update skiped."
+fi
+
+if [ "${NEDDED_REPO}" == "true" ] && ! yum -v repolist all 2>/dev/null | grep "epel-multimedia" &>/dev/null && ! dnf -v repolist all | grep "fedora-multimedia" &>/dev/null; then
+    cyan " "
+    warn "NOTE: This distribution (${SYSTEM_NAME_DETECTED} ${SYSTEM_VERSION}) requires the "${data[3]}" repository to install ffmpeg!"
+    cyan "Should we add "${data[3]}" to your repository list? (Required root or administrator privileges)"
+    OPTIONS=("Yes" "No" "Quit")
+    select OPTION in "${OPTIONS[@]}"; do
+        case "$REPLY" in
+            1|2) break;;
+            3 ) option_quit_installer;;
+            *)  invalid_option; continue;;
+        esac
+    done
+
+    if [ "$OPTION" == "${OPTIONS[0]}" ]; then
+        green_sleep "# Adding "${data[3]}" repository..."
+        for i in ${data[3]};
+        do
+            if [ "$SYSTEM_NAME_DETECTED" == "(CentOS|RedHat)" ]; then
+                yum-config-manager --add-repo $i
+			elif [ "$SYSTEM_NAME_DETECTED" == "Fedora" ]; then
+                dnf config-manager --add-repo $i
+            fi
+            if [ $? -ne 0 ]; then
+                error "Failed to add required repository for your distribution (${SYSTEM_NAME_DETECTED} ${SYSTEM_VERSION})!"
+                exit 1
+            fi
+        done
+    fi
+fi
+
+beginIFS=$endIFS
+IFS=":"
+split_data=${data[1]}
+endIFS=$beginIFS
+for split_package in ${split_data[@]}
+do
+    test_installed ${split_package}
+    if [ $? -ne 0 ]; then
+        error "Failed to install required package for TeaSpeak!"
+        exit 1
+    fi
+done
+unset IFS;
+
+# Create user, yes or no?
+cyan " "
+cyan "Do you want to create a TeaSpeak user?"
+cyan "*It is recommended to create a separated TeaSpeak user!"
+OPTIONS=("Yes" "No" "Quit")
+select OPTION in "${OPTIONS[@]}"; do
+    case "$REPLY" in
+        1|2 ) break;;
+        3 ) option_quit_installer;;
+        *) invalid_option;continue;;
+    esac
+done
+
+if [ "$OPTION" == ${OPTIONS[0]} ]; then
+    cyan " "
+    cyan "Please enter the name of the TeaSpeak user."
+    read teaUser
+    NO_USER=false
+elif [ "$OPTION" == ${OPTIONS[1]} ]; then
+    NO_USER=true
+    yellow_sleep "User creation skiped."
+fi
+
+# TeaSpeak install path.
+cyan " "
+cyan "Please enter the TeaSpeak installation path."
+cyan "Empty input = /home/ | Example input = /srv/"
+read teaPath
+if [ -z "$teaPath" ]; then
+    teaPath='home'
+fi
+
+TEASPEAK_DIR="/${teaPath}/${teaUser}"
+
+if [ "$NO_USER" == "false" ]; then
+    secure_user
+    if [ $? -ne 0 ]; then
+        error "Failed to set security option!"
+        exit 1
+    fi
+fi
+
+${SUDO_PREFIX} mkdir -p $TEASPEAK_DIR
+cd $TEASPEAK_DIR
+	
+# Downloading and setting up TeaSpeak.
+cyan " "
+cyan "Getting TeaSpeak version..."
+TEASPEAK_VERSION=$(curl -s --connect-timeout 10 -S -L -k https://repo.teaspeak.de/server/linux/${ARCH}/latest)
+TEA_REQUEST_URL="https://repo.teaspeak.de/server/linux/${ARCH}/TeaSpeak-${TEASPEAK_VERSION}.tar.gz"
+if [ $? -ne 0 ]; then
+    error "Failed to load the latest TeaSpeak version!"
+    exit 1
+fi
+green_sleep "# Newest version is ${TEASPEAK_VERSION}"
+
+cyan " "
+green_sleep "# Downloading ${TEA_REQUEST_URL} to ${TEASPEAK_DIR}"
+${SUDO_PREFIX} curl -s --connect-timeout 10 -S -L "$TEA_REQUEST_URL" -o teaspeak_latest.tar.gz
+if [ $? -ne 0 ]; then
+    error "Failed to download the latest TeaSpeak version!"
+    exit 1
+fi
+sleep 1
+green_sleep "# Unpacking and removing .tar.gz"
+${SUDO_PREFIX} tar -xzf teaspeak_latest.tar.gz
+${SUDO_PREFIX} rm teaspeak_latest.tar.gz
+green_sleep "DONE!"
+
+cyan " "
+green_sleep "# Making scripts executable."
+${SUDO_PREFIX} chown -R $teaUser:$teaUser /$teaPath/$teaUser/*
+${SUDO_PREFIX} chmod 774 /$TEASPEAK_DIR/*.sh
+green_sleep "DONE!"
+
+cyan " "
+green_sleep "Finished, TeaSpeak ${TEASPEAK_VERSION} is now installed!"
+
+# Start TeaSpeak in minimal mode.
+cyan " "
+cyan "Do you want to start TeaSpeak?"
+cyan "*Please save the Serverquery login and the Serveradmin token the first time you start TeaSpeak!"
+cyan "*CTRL+C = Exit"
+OPTIONS=("Start server" "Finish and exit")
+select OPTION in "${OPTIONS[@]}"; do
+    case "$REPLY" in
+        1|2 ) break;;
+        *) invalid_option;continue;;
     esac
 done
 	
-if [ "$OPTION" == "Start" ]; then
-    cyanMessage " "
-    greenOkAnim "# Starting TeaSpeak..."
-    if [ "$noUser" == "false" ]; then
-        cd /$teaPath/$teaUser; LD_LIBRARY_PATH="$LD_LIBRARY_PATH;./libs/" ./TeaSpeakServer; stty cooked echo
-    else
-        cd /$teaPath; LD_LIBRARY_PATH="$LD_LIBRARY_PATH;./libs/" ./TeaSpeakServer && stty cooked echo
-    fi
+if [ "$OPTION" == "${OPTIONS[0]}" ]; then
+    cyan " "
+    green_sleep "# Starting TeaSpeak..."
+    cd $TEASPEAK_DIR; ${SUDO_PREFIX} LD_LIBRARY_PATH="$LD_LIBRARY_PATH;./libs/" ./TeaSpeakServer; stty cooked echo
 	
-    cyanMessage " "
-    greenOkAnim "# Making new created files executable."
-    if [ "$noUser" == "false" ]; then
-        chown -R $teaUser:$teaUser /$teaPath/$teaUser/*
-        chmod 774 /$teaPath/$teaUser/*.sh
-    else
-        chown -R root:root /$teaPath/*
-        chmod 774 /$teaPath/*.sh
-    fi
-    greenOkAnim "DONE!"
+    cyan " "
+    green_sleep "# Making new created files executable."
+    ${SUDO_PREFIX} chown -R $teaUser:$teaUser /$TEASPEAK_DIR/*
+    ${SUDO_PREFIX} chmod 774 /$TEASPEAK_DIR/*.sh
+    green_sleep "DONE!"
 fi
 
-cyanMessage " "
-
-yellowMessage "NOTE: It is recommended to start the TeaSpeak server with the created user!"
-yellowMessage "      to start the TeaSpeak you can use the following bash scripts:"
-yellowMessage "      teastart.sh, teastart_minimal.sh, teastart_autorestart.sh and tealoop.sh."
-greenOkAnim "Script successfully completed."
+cyan " "
+yellow "NOTE: It is recommended to start the TeaSpeak server with the created user!"
+yellow "      to start the TeaSpeak you can use the following bash scripts:"
+yellow "      teastart.sh, teastart_minimal.sh, teastart_autorestart.sh and tealoop.sh."
+green_sleep "Script successfully completed."
 
 exit 0
-
-
-
-
