@@ -75,7 +75,7 @@ MACHINE_TYPE=`${SUDO_PREFIX} uname -m`
 if [ ${MACHINE_TYPE} == "x86_64" ]; then
     ARCH="AMD64"
 else
-    ARCH="x84"
+    ARCH="x86"
 fi
 
 function detect_packet_manager() {
