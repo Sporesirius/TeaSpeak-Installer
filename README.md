@@ -5,12 +5,12 @@ Currently supported distributions:
 
 Tested:
 - Debian
-- Ubuntu (Ubuntu Bionic 18.04 has no libav-tools, please compile it yourself.)
+- Ubuntu
 - openSUSE
-- CentOS (has no libav-tools, please compile it yourself.)
-- Arch (has no libav-tools, please compile it yourself.)
-- Fedora (has no libav-tools, please compile it yourself.)
+- CentOS (requires an additional repository for ffmpeg)
+- Arch
+- Fedora (requires an additional repository for ffmpeg)
 
 Not tested, but should work:
-- RedHat (has no libav-tools, please compile it yourself.)
+- RedHat (requires an additional repository for ffmpeg)
 - Mint
