@@ -70,7 +70,7 @@ elif [ "`id -u`" != "0" ]; then
     exit 1
 fi
 
-# Detect architecture
+# Detect architecture.
 MACHINE_TYPE=`${SUDO_PREFIX} uname -m`
 if [ ${MACHINE_TYPE} == "x86_64" ]; then
     ARCH="AMD64"
@@ -188,7 +188,7 @@ function detect_packet_manager() {
     done
 
     if [ "${PACKET_MANAGER_NAME}" == "" ]; then
-        error "Failed to determinate your system and the packet manager on it! (System: ${SYSTEM_NAME})"
+        error "Failed to determine your system and the packet manager on it! (System: ${SYSTEM_NAME_DETECTED} ${SYSTEM_VERSION} ${ARCH})"
         return 1
     fi
 
@@ -266,7 +266,7 @@ function test_installed() {
         eval "${SUDO_PREFIX} ${command}"
         green_sleep "DONE!"
         if [ $? -ne 0 ]; then
-            error "Failed to install required packages!"
+            error "Failed to install required package!"
             exit 1
         fi
         return 0
@@ -392,7 +392,7 @@ function secure_user() {
         ${SUDO_PREFIX} mkdir -p /$teaPath
         ${SUDO_PREFIX} useradd -m -b /$teaPath -s /bin/bash -g $teaUser $teaUser
         if [ $? -ne 0 ]; then
-            error "Failed to create the TeaSpeak user! Maybe incorrect password?"
+            error "Failed to create the TeaSpeak user! Maybe wrong password or existing user?"
             exit 1
         fi
         ${SUDO_PREFIX} passwd $teaUser
@@ -459,7 +459,7 @@ fi
 
 if [ "${NEDDED_REPO}" == "true" ] && ! yum -v repolist all 2>/dev/null | grep "epel-multimedia" &>/dev/null && ! dnf -v repolist all | grep "fedora-multimedia" &>/dev/null; then
     cyan " "
-    warn "NOTE: This distribution (${SYSTEM_NAME_DETECTED} ${SYSTEM_VERSION}) requires the "${data[3]}" repository to install ffmpeg!"
+    warn "NOTE: This distribution (${SYSTEM_NAME_DETECTED} ${SYSTEM_VERSION} ${ARCH}) requires the "${data[3]}" repository to install ffmpeg!"
     cyan "Should we add "${data[3]}" to your repository list? (Required root or administrator privileges)"
     OPTIONS=("Yes" "No" "Quit")
     select OPTION in "${OPTIONS[@]}"; do
@@ -495,7 +495,7 @@ for split_package in ${split_data[@]}
 do
     test_installed ${split_package}
     if [ $? -ne 0 ]; then
-        error "Failed to install required package for TeaSpeak!"
+        error "Failed to install required packages for TeaSpeak!"
         exit 1
     fi
 done
