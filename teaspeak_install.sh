@@ -319,13 +319,13 @@ function updateScript() {
             green_sleep "Done!"
 
             cyan " "
-            green_sleep "# Adjustign script rights for execution."
+            green_sleep "# Adjusting script rights for execution."
             ${SUDO_PREFIX} chmod 774 teaspeak_install.sh
             green_sleep "Done!"
 
             cyan " "
             green_sleep "# Restarting update script!"
-            sleep 3
+            sleep 1
             clear
             ${SUDO_PREFIX} ./teaspeak_install.sh
             exit 0
