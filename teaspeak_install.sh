@@ -73,7 +73,7 @@ fi
 # Detect architecture.
 MACHINE_TYPE=`${SUDO_PREFIX} uname -m`
 if [ ${MACHINE_TYPE} == "x86_64" ]; then
-    ARCH="AMD64"
+    ARCH="amd64"
 else
     ARCH="x86"
 fi
