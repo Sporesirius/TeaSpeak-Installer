@@ -2,7 +2,7 @@
 # TeaSpeak Installer
 # by Sporesirius and WolverinDEV
 
-INSTALLER_VERSION="1.11"
+INSTALLER_VERSION="1.12"
 
 function debug() {
     #echo "debug > ${@}"
@@ -416,6 +416,7 @@ cyan " "
 yellow "NOTE: You can exit the script any time with CTRL+C"
 yellow "      but not at every point recommendable!"
 
+# Get packet manager commands.
 detect_packet_manager
 if [ $? -ne 0 ]; then
     error "Exiting installer"
@@ -423,24 +424,11 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-test_installed curl
-test_installed tar
-if [ $? -ne 0 ]; then
-    error "Failed to install required packages for the installer!"
-    exit 1
-fi
-
-updateScript
-if [ $? -ne 0 ]; then
-    error "Failed to update script!"
-    exit 1
-fi
-
-# Update system and install TeaSpeak packages.
+# Update system packages.
 cyan " "
-cyan "Update the system packages to the latest version?"
-cyan "*It is recommended to update the system, otherwise dependencies might brake!"
-OPTIONS=("Update" "Skip" "Quit")
+cyan "Update the package list to the latest version?"
+warn "WARN: It is recommended to update the system before run the installer, otherwise dependencies might brake or the script may not work properly!"
+OPTIONS=("Update" "Skip (Not recommended)" "Quit")
 select OPTION in "${OPTIONS[@]}"; do
     case "$REPLY" in
         1|2 ) break;;
@@ -457,6 +445,22 @@ elif [ "$OPTION" == "Skip" ]; then
     yellow_sleep "System update skiped."
 fi
 
+# Update installer script.
+updateScript
+if [ $? -ne 0 ]; then
+    error "Failed to update script!"
+    exit 1
+fi
+
+# Install packages for the installer itself.
+test_installed curl
+test_installed tar
+if [ $? -ne 0 ]; then
+    error "Failed to install required packages for the installer!"
+    exit 1
+fi
+
+# Check if repo is needed.
 if [ "${NEDDED_REPO}" == "true" ] && ! yum -v repolist all 2>/dev/null | grep "epel-multimedia" &>/dev/null && ! dnf -v repolist all | grep "fedora-multimedia" &>/dev/null; then
     cyan " "
     warn "NOTE: This distribution (${SYSTEM_NAME_DETECTED} ${SYSTEM_VERSION} ${ARCH}) requires the "${data[3]}" repository to install ffmpeg!"
@@ -487,6 +491,7 @@ if [ "${NEDDED_REPO}" == "true" ] && ! yum -v repolist all 2>/dev/null | grep "e
     fi
 fi
 
+# Begin install needed TeaSpeak packages.
 beginIFS=$endIFS
 IFS=":"
 split_data=${data[1]}
