@@ -445,18 +445,18 @@ elif [ "$OPTION" == "Skip" ]; then
     yellow_sleep "System update skiped."
 fi
 
-# Update installer script.
-updateScript
-if [ $? -ne 0 ]; then
-    error "Failed to update script!"
-    exit 1
-fi
-
 # Install packages for the installer itself.
 test_installed curl
 test_installed tar
 if [ $? -ne 0 ]; then
     error "Failed to install required packages for the installer!"
+    exit 1
+fi
+
+# Update installer script.
+updateScript
+if [ $? -ne 0 ]; then
+    error "Failed to update script!"
     exit 1
 fi
 
